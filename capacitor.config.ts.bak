@@ -1,0 +1,21 @@
+import { CapacitorConfig } from '@capacitor/cli';
+
+const config: CapacitorConfig = {
+  appId: 'com.culturama.app',
+  appName: 'Culturama',
+  webDir: 'Culturama/dist',
+  bundledWebRuntime: false,
+  server: {
+    androidScheme: 'https'
+  },
+  plugins: {
+    SplashScreen: {
+      launchShowDuration: 2000,
+      backgroundColor: "#84cc16",
+      showSpinner: true,
+      spinnerColor: "#84cc16",
+    }
+  }
+};
+
+export default config;
