@@ -15,6 +15,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { useScheduling } from '@/hooks/useScheduling';
+import { useCalendarSync } from '@/hooks/useCalendarSync';
 
 interface SchedulingModalProps {
   isOpen: boolean;
@@ -49,6 +50,7 @@ const SchedulingModal = ({ isOpen, onClose, item, type }: SchedulingModalProps) 
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
   const [selectedTime, setSelectedTime] = useState<string>('');
   const { addScheduledEvent } = useScheduling();
+  const { syncBookingEvent } = useCalendarSync();
   const { toast } = useToast();
 
   // Função para verificar se uma data está disponível
@@ -78,6 +80,7 @@ const SchedulingModal = ({ isOpen, onClose, item, type }: SchedulingModalProps) 
     const scheduledDate = new Date(selectedDate);
     scheduledDate.setHours(parseInt(selectedTime.split(':')[0]), parseInt(selectedTime.split(':')[1]));
 
+    // Adicionar ao calendário local
     addScheduledEvent({
       type,
       itemId: item.id,
@@ -89,9 +92,25 @@ const SchedulingModal = ({ isOpen, onClose, item, type }: SchedulingModalProps) 
       image: item.image,
     });
 
+    // Sincronizar com guia/estabelecimento
+    syncBookingEvent({
+      type: 'booking',
+      guideId: type === 'destination' ? item.id : undefined,
+      establishmentId: type === 'restaurant' ? item.id : undefined,
+      clientId: '',
+      date: scheduledDate,
+      time: selectedTime,
+      status: 'pending',
+      details: {
+        serviceName: item.name,
+        location: item.location,
+        price: undefined // Remove price reference since it's not defined in item type
+      }
+    });
+
     toast({
-      title: "Agendado!",
-      description: `${item.name} foi agendado para ${format(scheduledDate, 'dd/MM/yyyy', { locale: ptBR })} às ${selectedTime}`,
+      title: "Agendamento solicitado!",
+      description: `${item.name} foi solicitado para ${format(scheduledDate, 'dd/MM/yyyy', { locale: ptBR })} às ${selectedTime}. Aguarde confirmação.`,
     });
 
     setSelectedDate(undefined);
