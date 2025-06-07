@@ -1,9 +1,16 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Calendar } from '@/components/ui/calendar';
 import { Guide } from '@/types';
+import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/hooks/use-toast';
+import { useNavigate } from 'react-router-dom';
+import { Calendar as CalendarIcon, Clock, Users } from 'lucide-react';
+import { DateRange } from 'react-day-picker';
+import { ptBR } from 'date-fns/locale';
 
 interface GuideCardProps {
   guide: Guide;
@@ -12,6 +19,101 @@ interface GuideCardProps {
 }
 
 const GuideCard = ({ guide, onViewProfile, onStartChat }: GuideCardProps) => {
+  const { isAuthenticated, checkPaidReservation } = useAuth();
+  const { toast } = useToast();
+  const navigate = useNavigate();
+  const [showBooking, setShowBooking] = useState(false);
+  const [dateRange, setDateRange] = useState<DateRange | undefined>();
+  const [hoursPerDay, setHoursPerDay] = useState(8);
+  const [numberOfPeople, setNumberOfPeople] = useState(1);
+
+  // Simular disponibilidade do guia (próximos 30 dias, exceto alguns dias ocupados)
+  const getAvailableDates = () => {
+    const today = new Date();
+    const availableDates: Date[] = [];
+    const unavailableDays = [0, 6]; // Domingo e Sábado indisponíveis para alguns guias
+    
+    for (let i = 1; i <= 30; i++) {
+      const date = new Date(today);
+      date.setDate(today.getDate() + i);
+      
+      // Simular alguns dias ocupados aleatoriamente
+      const isUnavailable = Math.random() < 0.2 || unavailableDays.includes(date.getDay());
+      
+      if (!isUnavailable) {
+        availableDates.push(date);
+      }
+    }
+    
+    return availableDates;
+  };
+
+  const availableDates = getAvailableDates();
+
+  // Calcular total de dias e valor
+  const calculateTotal = () => {
+    if (!dateRange?.from || !dateRange?.to) return { days: 0, total: 0 };
+    
+    const timeDiff = dateRange.to.getTime() - dateRange.from.getTime();
+    const days = Math.ceil(timeDiff / (1000 * 3600 * 24)) + 1;
+    const total = days * hoursPerDay * guide.pricePerHour * numberOfPeople;
+    
+    return { days, total };
+  };
+
+  const { days, total } = calculateTotal();
+
+  const isDateAvailable = (date: Date) => {
+    return availableDates.some(availableDate => 
+      availableDate.toDateString() === date.toDateString()
+    );
+  };
+
+  const handleContractClick = () => {
+    if (!isAuthenticated) {
+      toast({
+        title: "Login necessário",
+        description: "Faça login para contratar guias.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Navegar para a mochila com informações do guia
+    navigate('/backpack', { 
+      state: { 
+        selectedGuide: guide,
+        dateRange: dateRange,
+        hoursPerDay: hoursPerDay,
+        numberOfPeople: numberOfPeople,
+        totalPrice: total
+      } 
+    });
+  };
+
+  const handleChatClick = () => {
+    if (!isAuthenticated) {
+      toast({
+        title: "Login necessário",
+        description: "Faça login para conversar com guias.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    const hasPaidReservation = checkPaidReservation(guide.id);
+    
+    if (!hasPaidReservation) {
+      toast({
+        title: "Pagamento necessário",
+        description: "Contrate os serviços do guia para iniciar uma conversa.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    onStartChat(guide);
+  };
   // Gerar foto fictícia baseada no ID do guia
   const getGuidePhoto = (id: string) => {
     const photos = [
@@ -124,6 +226,162 @@ const GuideCard = ({ guide, onViewProfile, onStartChat }: GuideCardProps) => {
           {guide.description}
         </p>
         
+        {/* Nova seção de disponibilidade */}
+        <div className="mb-3 p-3 bg-green-50 rounded-lg border border-green-200">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm font-medium text-green-800 flex items-center gap-1">
+              <CalendarIcon className="h-4 w-4" />
+              Disponibilidade
+            </span>
+            <span className="text-xs text-green-600">
+              {availableDates.length} dias disponíveis
+            </span>
+          </div>
+          
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowBooking(!showBooking)}
+            className="w-full text-xs border-green-300 text-green-700 hover:bg-green-100"
+          >
+            {showBooking ? 'Ocultar Calendário' : 'Selecionar Período'}
+          </Button>
+        </div>
+
+        {/* Seção de reserva expandida com calendário centralizado */}
+        {showBooking && (
+          <div className="mb-4 p-4 bg-gray-50 rounded-lg border">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-sm font-medium text-green-800 flex items-center gap-1">
+                <CalendarIcon className="h-4 w-4" />
+                Disponibilidade
+              </span>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowBooking(false)}
+                className="text-xs text-gray-500 hover:text-gray-700"
+              >
+                ✕ Fechar
+              </Button>
+            </div>
+            
+            <div className="mb-3 text-xs text-green-600">
+              {availableDates.length} dias disponíveis nos próximos 30 dias
+            </div>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm font-medium text-gray-700 mb-2 block">
+                  Selecione o período da viagem
+                </label>
+                <Calendar
+                  mode="range"
+                  selected={dateRange}
+                  onSelect={setDateRange}
+                  disabled={(date) => !isDateAvailable(date) || date < new Date()}
+                  locale={ptBR}
+                  className="rounded-md border text-xs mx-auto"
+                  numberOfMonths={1}
+                  weekStartsOn={0}
+                  formatters={{
+                    formatCaption: (date) => {
+                      return new Intl.DateTimeFormat('pt-BR', {
+                        month: 'long',
+                        year: 'numeric'
+                      }).format(date);
+                    },
+                    formatWeekdayName: (date) => {
+                      return new Intl.DateTimeFormat('pt-BR', {
+                        weekday: 'short'
+                      }).format(date).replace('.', '');
+                    }
+                  }}
+                />
+              </div>
+              
+              {/* Seleção de quantidade de pessoas */}
+              <div>
+                <label className="text-sm font-medium text-gray-700 mb-2 block">
+                  Quantidade de pessoas
+                </label>
+                <div className="flex items-center gap-2">
+                  <Users className="h-4 w-4 text-gray-500" />
+                  <input
+                    type="number"
+                    min="1"
+                    max="20"
+                    value={numberOfPeople}
+                    onChange={(e) => setNumberOfPeople(Number(e.target.value))}
+                    className="w-20 px-2 py-1 border rounded text-sm"
+                  />
+                  <span className="text-sm text-gray-600">
+                    {numberOfPeople === 1 ? 'pessoa' : 'pessoas'}
+                  </span>
+                </div>
+              </div>
+              
+              {dateRange?.from && dateRange?.to && (
+                <div>
+                  <label className="text-sm font-medium text-gray-700 mb-2 block">
+                    Horas por dia
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <Clock className="h-4 w-4 text-gray-500" />
+                    <input
+                      type="number"
+                      min="1"
+                      max="12"
+                      value={hoursPerDay}
+                      onChange={(e) => setHoursPerDay(Number(e.target.value))}
+                      className="w-20 px-2 py-1 border rounded text-sm"
+                    />
+                    <span className="text-sm text-gray-600">horas/dia</span>
+                  </div>
+                </div>
+              )}
+              
+              {dateRange?.from && dateRange?.to && (
+                <div className="bg-cerrado-50 p-3 rounded-lg border border-cerrado-200">
+                  <div className="text-sm space-y-1">
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Período:</span>
+                      <span className="font-medium">
+                        {dateRange.from.toLocaleDateString('pt-BR')} - {dateRange.to.toLocaleDateString('pt-BR')}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Duração:</span>
+                      <span className="font-medium">{days} dias</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Pessoas:</span>
+                      <span className="font-medium">{numberOfPeople} {numberOfPeople === 1 ? 'pessoa' : 'pessoas'}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Horas por dia:</span>
+                      <span className="font-medium">{hoursPerDay}h</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Horas totais:</span>
+                      <span className="font-medium">{days * hoursPerDay}h</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Valor por hora (por pessoa):</span>
+                      <span className="font-medium">R$ {guide.pricePerHour}</span>
+                    </div>
+                    <hr className="my-2" />
+                    <div className="flex justify-between text-lg font-bold text-cerrado-700">
+                      <span>Total:</span>
+                      <span>R$ {total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+        
         <div className="flex items-center justify-between text-sm text-gray-500">
           <span className="flex items-center">
             <span className="mr-1">🎯</span>
@@ -145,11 +403,13 @@ const GuideCard = ({ guide, onViewProfile, onStartChat }: GuideCardProps) => {
           >
             Ver Perfil
           </Button>
-          <Button 
-            className="flex-1 bg-cerrado-600 hover:bg-cerrado-700 text-white"
-            onClick={() => onStartChat(guide)}
+          <Button
+            variant="outline"
+            size="sm"
+            className="flex-1 bg-pantanal-50 hover:bg-pantanal-100 text-pantanal-700"
+            onClick={checkPaidReservation(guide.id) ? handleChatClick : handleContractClick}
           >
-            💬 Chat
+            💬 {checkPaidReservation(guide.id) ? 'Chat' : 'Contratar'}
           </Button>
         </div>
       </CardFooter>

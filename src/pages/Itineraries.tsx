@@ -195,21 +195,8 @@ const Itineraries = () => {
         </Button>
 
         <div className="mb-8">
-          <h1 className="text-4xl font-bold gradient-text mb-4">📍 Todos os Roteiros</h1>
-          <p className="text-gray-600 text-lg">Descubra roteiros incríveis pelo Mato Grosso</p>
-        </div>
-
-        {/* Search Bar */}
-        <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-            <Input
-              placeholder="Buscar roteiros..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
-            />
-          </div>
+          <h1 className="text-4xl font-bold gradient-text mb-4 text-center">📍 Todos os Roteiros</h1>
+          <p className="text-gray-600 text-lg text-center">Descubra roteiros incríveis pelo Mato Grosso</p>
         </div>
 
         {/* Filtros Bonitos */}

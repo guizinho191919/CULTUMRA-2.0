@@ -6,56 +6,21 @@ import Navigation from '@/components/layout/Navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { useNotifications } from '@/contexts/NotificationContext';
+import { formatDistanceToNow } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+import { Trash2, Settings, CheckCircle2 } from 'lucide-react';
 
 const Notifications = () => {
   const navigate = useNavigate();
-  const [notifications] = useState([
-    {
-      id: '1',
-      type: 'message',
-      title: 'Nova mensagem de João Silva',
-      description: 'Oi! Gostaria de agendar o tour para amanhã.',
-      time: 'Há 5 minutos',
-      read: false,
-      action: () => navigate('/chat/1')
-    },
-    {
-      id: '2',
-      type: 'booking',
-      title: 'Reserva confirmada',
-      description: 'Sua reserva para Chapada dos Guimarães foi confirmada.',
-      time: 'Há 1 hora',
-      read: false,
-      action: () => navigate('/spot/1')
-    },
-    {
-      id: '3',
-      type: 'event',
-      title: 'Novo evento próximo a você',
-      description: 'Festival de Pesca no Pantanal - 15 de Janeiro',
-      time: 'Há 2 horas',
-      read: true,
-      action: () => navigate('/events')
-    },
-    {
-      id: '4',
-      type: 'message',
-      title: 'Maria Santos respondeu',
-      description: 'Obrigada pela avaliação! Espero vê-lo novamente.',
-      time: 'Ontem',
-      read: true,
-      action: () => navigate('/chat/2')
-    },
-    {
-      id: '5',
-      type: 'promotion',
-      title: 'Oferta especial',
-      description: '20% de desconto em tours no Pantanal!',
-      time: 'Há 2 dias',
-      read: true,
-      action: () => navigate('/explore')
-    }
-  ]);
+  const { 
+    notifications, 
+    unreadCount, 
+    markAsRead, 
+    markAllAsRead, 
+    removeNotification, 
+    clearAllNotifications 
+  } = useNotifications();
 
   const getNotificationIcon = (type: string) => {
     switch (type) {
@@ -63,29 +28,89 @@ const Notifications = () => {
       case 'booking': return '📅';
       case 'event': return '🎉';
       case 'promotion': return '🎁';
+      case 'system': return '⚙️';
+      case 'payment': return '💳';
+      case 'reminder': return '⏰';
       default: return '🔔';
     }
   };
 
-  const unreadCount = notifications.filter(n => !n.read).length;
+  const handleNotificationClick = (notification: any) => {
+    if (!notification.read) {
+      markAsRead(notification.id);
+    }
+    
+    if (notification.action) {
+      notification.action();
+    } else if (notification.actionUrl) {
+      navigate(notification.actionUrl);
+    }
+  };
+
+  const formatTime = (timestamp: Date) => {
+    return formatDistanceToNow(timestamp, { 
+      addSuffix: true, 
+      locale: ptBR 
+    });
+  };
+
+  const getPriorityColor = (priority: string) => {
+    switch (priority) {
+      case 'high': return 'border-red-200 bg-red-50';
+      case 'medium': return 'border-yellow-200 bg-yellow-50';
+      case 'low': return 'border-gray-200 bg-gray-50';
+      default: return 'border-gray-200';
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
       
       <main className="container mx-auto px-4 py-6 pb-20">
+        {/* Back Button */}
+        <Button 
+          variant="ghost" 
+          onClick={() => navigate('/')}
+          className="mb-4"
+        >
+          ← Voltar
+        </Button>
+
         <div className="mb-6 flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold gradient-text mb-2">Notificações</h1>
             <p className="text-gray-600">
-              {unreadCount > 0 ? `${unreadCount} notificação${unreadCount > 1 ? 'ões' : ''} não lida${unreadCount > 1 ? 's' : ''}` : 'Todas as notificações foram lidas'}
+              {unreadCount > 0 
+                ? `${unreadCount} notificação${unreadCount > 1 ? 'ões' : ''} não lida${unreadCount > 1 ? 's' : ''}` 
+                : 'Todas as notificações foram lidas'
+              }
             </p>
           </div>
-          {unreadCount > 0 && (
-            <Button variant="outline" size="sm">
-              Marcar todas como lidas
-            </Button>
-          )}
+          <div className="flex space-x-2">
+            {unreadCount > 0 && (
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={markAllAsRead}
+                className="flex items-center space-x-1"
+              >
+                <CheckCircle2 className="h-4 w-4" />
+                <span>Marcar todas como lidas</span>
+              </Button>
+            )}
+            {notifications.length > 0 && (
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={clearAllNotifications}
+                className="flex items-center space-x-1 text-red-600 hover:text-red-700"
+              >
+                <Trash2 className="h-4 w-4" />
+                <span className="hidden sm:inline">Limpar todas</span>
+              </Button>
+            )}
+          </div>
         </div>
 
         {/* Notifications List */}
@@ -94,9 +119,11 @@ const Notifications = () => {
             <Card 
               key={notification.id} 
               className={`cursor-pointer transition-all hover:shadow-md ${
-                !notification.read ? 'bg-cerrado-50 border-cerrado-200' : ''
+                !notification.read 
+                  ? `${getPriorityColor(notification.priority)} border-l-4 border-l-cerrado-500` 
+                  : 'hover:bg-gray-50'
               }`}
-              onClick={notification.action}
+              onClick={() => handleNotificationClick(notification)}
             >
               <CardContent className="p-4">
                 <div className="flex items-start space-x-4">
@@ -106,21 +133,43 @@ const Notifications = () => {
                   <div className="flex-1">
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
-                        <h3 className={`font-medium ${!notification.read ? 'text-cerrado-900' : 'text-gray-900'}`}>
+                        <h3 className={`font-medium ${
+                          !notification.read ? 'text-cerrado-900' : 'text-gray-900'
+                        }`}>
                           {notification.title}
                         </h3>
                         <p className="text-gray-600 text-sm mt-1">
                           {notification.description}
                         </p>
-                        <span className="text-xs text-gray-500 mt-2 block">
-                          {notification.time}
-                        </span>
+                        <div className="flex items-center space-x-2 mt-2">
+                          <span className="text-xs text-gray-500">
+                            {formatTime(notification.timestamp)}
+                          </span>
+                          {notification.priority === 'high' && (
+                            <Badge variant="destructive" className="text-xs">
+                              Urgente
+                            </Badge>
+                          )}
+                        </div>
                       </div>
-                      {!notification.read && (
-                        <Badge className="bg-cerrado-500 ml-2">
-                          Novo
-                        </Badge>
-                      )}
+                      <div className="flex items-center space-x-2">
+                        {!notification.read && (
+                          <Badge className="bg-cerrado-500">
+                            Novo
+                          </Badge>
+                        )}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            removeNotification(notification.id);
+                          }}
+                          className="h-8 w-8 p-0 text-gray-400 hover:text-red-600"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -148,26 +197,50 @@ const Notifications = () => {
         <Card className="mt-8">
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
-              <span>⚙️</span>
+              <Settings className="h-5 w-5" />
               <span>Configurações de Notificação</span>
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            <Button variant="outline" className="w-full justify-start">
+            <Button 
+              variant="outline" 
+              className="w-full justify-start"
+              onClick={() => navigate('/settings/notifications?section=general')}
+            >
+              <span className="mr-2">⚙️</span>
+              Configurações Gerais
+            </Button>
+            <Button 
+              variant="outline" 
+              className="w-full justify-start"
+              onClick={() => navigate('/settings/notifications?section=messages')}
+            >
               <span className="mr-2">💬</span>
-              Configurar notificações de mensagens
+              Configurar mensagens
             </Button>
-            <Button variant="outline" className="w-full justify-start">
+            <Button 
+              variant="outline" 
+              className="w-full justify-start"
+              onClick={() => navigate('/settings/notifications?section=reservations')}
+            >
               <span className="mr-2">📅</span>
-              Configurar notificações de reservas
+              Configurar reservas
             </Button>
-            <Button variant="outline" className="w-full justify-start">
+            <Button 
+              variant="outline" 
+              className="w-full justify-start"
+              onClick={() => navigate('/settings/notifications?section=events')}
+            >
               <span className="mr-2">🎉</span>
-              Configurar notificações de eventos
+              Configurar eventos
             </Button>
-            <Button variant="outline" className="w-full justify-start">
+            <Button 
+              variant="outline" 
+              className="w-full justify-start"
+              onClick={() => navigate('/settings/notifications?section=promotions')}
+            >
               <span className="mr-2">🎁</span>
-              Configurar notificações promocionais
+              Configurar promoções
             </Button>
           </CardContent>
         </Card>

@@ -1,11 +1,11 @@
-
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
 interface User {
+  id: string;
   email: string;
   name: string;
   profilePicture?: string;
-  userType?: 'admin' | 'guide' | 'restaurant'; // Novo campo para identificar o tipo de usuário
+  userType?: 'admin' | 'guide' | 'restaurant';
 }
 
 interface AuthContextType {
@@ -15,6 +15,7 @@ interface AuthContextType {
   login: (userData: User) => void;
   logout: () => void;
   updateProfilePicture: (pictureUrl: string) => void;
+  checkPaidReservation: (guideId: string) => boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -51,7 +52,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const login = (userData: User) => {
     console.log('Login called with:', userData);
     
-    // Determinar o tipo de usuário com base no email
     let userType: 'admin' | 'guide' | 'restaurant' | undefined;
     
     if (userData.email === 'admin@admin.com.br') {
@@ -82,6 +82,15 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   const isAuthenticated = !!user;
 
+  const checkPaidReservation = (guideId: string): boolean => {
+    const userReservations = JSON.parse(localStorage.getItem('userReservations') || '[]');
+    return userReservations.some((reservation: any) => 
+      reservation.guideId === guideId && 
+      reservation.paymentStatus === 'paid' &&
+      reservation.userId === user?.id
+    );
+  };
+
   const value = {
     user,
     isLoading,
@@ -89,6 +98,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     login,
     logout,
     updateProfilePicture,
+    checkPaidReservation,
   };
 
   return (

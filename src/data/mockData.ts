@@ -131,7 +131,10 @@ export const mockGuides: Guide[] = [
     contact: {
       phone: '(65) 99999-1234',
       email: 'carlos@email.com'
-    }
+    },
+    profileComplete: true,
+    profileCompletionPercentage: 100,
+    missingFields: []
   },
   {
     id: '2',
@@ -456,6 +459,173 @@ export const mockEvents: Event[] = [
     image: 'https://images.unsplash.com/photo-1502920917128-1aa500764cbd?w=800&h=600&fit=crop',
     category: 'cultural',
     organizer: 'Associação de Fotógrafos de MT'
+  },
+  // Novos eventos adicionados
+  {
+    id: '9',
+    title: 'Cuiabá vs Flamengo - Campeonato Brasileiro',
+    description: 'Partida válida pela 35ª rodada do Campeonato Brasileiro. Ingressos disponíveis!',
+    date: new Date('2024-12-08T16:00:00'),
+    time: '16:00',
+    location: {
+      name: 'Arena Pantanal',
+      address: 'Av. Agrícola Paes de Barros, s/n - Verdão'
+    },
+    price: 45,
+    image: 'https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=800&h=600&fit=crop',
+    category: 'esportivo',
+    organizer: 'Cuiabá Esporte Clube',
+    capacity: 44000,
+    registered: 32500
+  },
+  {
+    id: '10',
+    title: 'Pelada do Fim de Semana - Arena do Povo',
+    description: 'Futebol amador aberto para todos os níveis. Venha jogar e se divertir!',
+    date: new Date('2024-12-07T08:00:00'),
+    time: '08:00',
+    location: {
+      name: 'Arena do Povo',
+      address: 'Rua das Palmeiras, 450 - Cidade Verde'
+    },
+    price: 15,
+    image: 'https://images.unsplash.com/photo-1431324155629-1a6deb1dec8d?w=800&h=600&fit=crop',
+    category: 'esportivo',
+    organizer: 'Associação Esportiva Cidade Verde',
+    capacity: 50,
+    registered: 28
+  },
+  {
+    id: '11',
+    title: 'Torneio de Futsal Pantanal Cup',
+    description: 'Campeonato de futsal com times amadores e semi-profissionais. Inscrições abertas!',
+    date: new Date('2024-12-14T18:00:00'),
+    time: '18:00',
+    location: {
+      name: 'Ginásio Aecim Tocantins',
+      address: 'Av. Fernando Corrêa da Costa, 2367'
+    },
+    price: 20,
+    image: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=800&h=600&fit=crop',
+    category: 'esportivo',
+    organizer: 'Liga Pantanal de Futsal',
+    capacity: 2000,
+    registered: 850
+  },
+  {
+    id: '12',
+    title: 'Festival de Natal do Pantanal',
+    description: 'Celebração natalina com apresentações musicais, feira gastronômica e atividades para toda família.',
+    date: new Date('2024-12-15T17:00:00'),
+    time: '17:00',
+    location: {
+      name: 'Praça da República',
+      address: 'Centro Histórico de Cuiabá'
+    },
+    price: 0,
+    image: 'https://images.unsplash.com/photo-1512389142860-9c449e58a543?w=800&h=600&fit=crop',
+    category: 'festival',
+    organizer: 'Prefeitura de Cuiabá'
+  },
+  {
+    id: '13',
+    title: 'Show de Verão - Luan Santana',
+    description: 'Show exclusivo do cantor Luan Santana em Cuiabá. Ingressos limitados!',
+    date: new Date('2024-12-20T21:00:00'),
+    time: '21:00',
+    location: {
+      name: 'Arena Pantanal',
+      address: 'Av. Agrícola Paes de Barros, s/n - Verdão'
+    },
+    price: 180,
+    image: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=800&h=600&fit=crop',
+    category: 'festival',
+    organizer: 'Live Nation Brasil',
+    capacity: 44000,
+    registered: 41200
+  },
+  {
+    id: '14',
+    title: 'Pelada da Galera - Campo do Bairro',
+    description: 'Futebol de campo informal. Traga sua chuteira e venha jogar conosco!',
+    date: new Date('2024-12-21T16:00:00'),
+    time: '16:00',
+    location: {
+      name: 'Campo do Jardim Leblon',
+      address: 'Rua dos Ipês, 123 - Jardim Leblon'
+    },
+    price: 10,
+    image: 'https://images.unsplash.com/photo-1431324155629-1a6deb1dec8d?w=800&h=600&fit=crop',
+    category: 'esportivo',
+    organizer: 'Galera do Leblon',
+    capacity: 30,
+    registered: 18
+  },
+  {
+    id: '15',
+    title: 'Reveillon Pantanal 2025',
+    description: 'Festa de Ano Novo com shows, fogos de artifício e muita diversão para receber 2025!',
+    date: new Date('2024-12-31T22:00:00'),
+    time: '22:00',
+    location: {
+      name: 'Orla do Porto',
+      address: 'Av. Beira Rio - Centro Geodésico'
+    },
+    price: 50,
+    image: 'https://images.unsplash.com/photo-1467810563316-b5476525c0f9?w=800&h=600&fit=crop',
+    category: 'festival',
+    organizer: 'Prefeitura de Cuiabá',
+    capacity: 15000,
+    registered: 8500
+  },
+  {
+    id: '16',
+    title: 'Campeonato de Beach Soccer',
+    description: 'Torneio de futebol de areia com equipes locais. Venha torcer ou participar!',
+    date: new Date('2024-12-28T14:00:00'),
+    time: '14:00',
+    location: {
+      name: 'Arena de Beach Soccer',
+      address: 'Parque Aquático do Pantanal - Várzea Grande'
+    },
+    price: 25,
+    image: 'https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=800&h=600&fit=crop',
+    category: 'esportivo',
+    organizer: 'Federação de Beach Soccer MT',
+    capacity: 500,
+    registered: 320
+  },
+  {
+    id: '17',
+    title: 'Feira de Artesanato de Fim de Ano',
+    description: 'Exposição e venda de artesanato local, perfeito para presentes de Natal e Ano Novo.',
+    date: new Date('2024-12-22T09:00:00'),
+    time: '09:00',
+    location: {
+      name: 'Casa do Artesão',
+      address: 'Rua 13 de Junho, 315 - Centro'
+    },
+    price: 0,
+    image: 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=800&h=600&fit=crop',
+    category: 'cultural',
+    organizer: 'Secretaria de Cultura MT'
+  },
+  {
+    id: '18',
+    title: 'Torneio de Futebol Society',
+    description: 'Campeonato de futebol society com times amadores. Inscrições abertas até o dia do evento!',
+    date: new Date('2024-12-29T08:00:00'),
+    time: '08:00',
+    location: {
+      name: 'Centro Esportivo Pantanal',
+      address: 'Av. Miguel Sutil, 8000 - Ribeirão do Lipa'
+    },
+    price: 30,
+    image: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=800&h=600&fit=crop',
+    category: 'esportivo',
+    organizer: 'Liga Society MT',
+    capacity: 200,
+    registered: 145
   }
 ];
 // Adicionar/atualizar especialidades dos guias para incluir:

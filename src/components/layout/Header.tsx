@@ -8,6 +8,7 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { useBackpack } from '@/hooks/useBackpack';
 import { useWallet } from '@/hooks/useWallet';
 import { useAuth } from '@/contexts/AuthContext';
+import { useNotifications } from '@/contexts/NotificationContext';
 import { useAdmin } from '@/hooks/useAdmin';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Backpack, Wallet, Bell, Heart, Search, X } from 'lucide-react';
@@ -20,7 +21,8 @@ const Header = () => {
   const { getTotalItems } = useBackpack();
   const { balance } = useWallet();
   const { user, isAuthenticated } = useAuth();
-  const { currentUser } = useAdmin(); // Adicionar esta linha
+  const { unreadCount } = useNotifications();
+  const { currentUser } = useAdmin();
   const isMobile = useIsMobile();
 
   const totalItems = getTotalItems();
@@ -45,25 +47,18 @@ const Header = () => {
     setIsSearchFocused(false);
   };
 
-  // Check if user has admin access
   const isAdmin = currentUser?.role === 'admin' || currentUser?.permissions.includes('*');
-
-  // On mobile, when search is active, show expanded search
   const isSearchExpanded = isMobile && isSearchFocused;
-  
-  // Show search icon when there's no text and search is not focused, or when search is expanded
   const showSearchIcon = (!searchTerm && !isSearchFocused) || isSearchExpanded;
 
   return (
     <header className="sticky top-0 z-40 w-full border-b bg-white/95 backdrop-blur-md">
       <div className="container mx-auto px-4">
         <div className="flex h-16 items-center justify-between">
-          {/* Logo - hidden when search is expanded on mobile */}
           {!isSearchExpanded && (
             <Logo1 showText={!isMobile} />
           )}
 
-          {/* Search Bar */}
           <div className={`transition-all duration-300 ${
             isSearchExpanded 
               ? 'flex-1 absolute left-4 right-4 z-50' 
@@ -79,14 +74,12 @@ const Header = () => {
                 onBlur={handleSearchBlur}
               />
               
-              {/* Search icon - show when there's no text and not focused, or when expanded */}
               {showSearchIcon && (
                 <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
                   <Search className="h-4 w-4" />
                 </div>
               )}
               
-              {/* Close button - only on expanded search */}
               {isSearchExpanded && (
                 <button
                   type="button"
@@ -99,7 +92,6 @@ const Header = () => {
             </form>
           </div>
 
-          {/* User Actions - hidden when search is expanded on mobile */}
           {!isSearchExpanded && (
             <div className="flex items-center space-x-3">
               {isAdmin && (
@@ -110,7 +102,6 @@ const Header = () => {
                 </Link>
               )}
               
-              {/* Restringir mochila apenas para usuários logados */}
               {isAuthenticated ? (
                 <Link to="/backpack">
                   <Button variant="ghost" size="sm" className="relative h-9 w-9 p-0">
@@ -133,7 +124,6 @@ const Header = () => {
                 </Button>
               )}
               
-              {/* Restringir carteira apenas para usuários logados */}
               {isAuthenticated ? (
                 <Link to="/wallet">
                   <Button variant="ghost" size="sm" className="relative flex items-center space-x-1 h-9 px-2">
@@ -155,14 +145,15 @@ const Header = () => {
                 </Button>
               )}
               
-              {/* Restringir notificações apenas para usuários logados */}
               {isAuthenticated ? (
                 <Link to="/notifications">
                   <Button variant="ghost" size="sm" className="relative h-9 w-9 p-0">
                     <Bell className="h-5 w-5" />
-                    <Badge className="absolute -top-1 -right-1 h-4 w-4 flex items-center justify-center text-[10px] bg-red-500 text-white p-0 border-white border">
-                      2
-                    </Badge>
+                    {unreadCount > 0 && (
+                      <Badge className="absolute -top-1 -right-1 h-4 w-4 flex items-center justify-center text-[10px] bg-red-500 text-white p-0 border-white border">
+                        {unreadCount > 99 ? '99+' : unreadCount}
+                      </Badge>
+                    )}
                   </Button>
                 </Link>
               ) : (
@@ -176,7 +167,6 @@ const Header = () => {
                 </Button>
               )}
               
-              {/* Restringir favoritos apenas para usuários logados */}
               {isAuthenticated ? (
                 <Link to="/favorites">
                   <Button variant="ghost" size="sm" className="h-9 w-9 p-0">
@@ -194,11 +184,9 @@ const Header = () => {
                 </Button>
               )}
               
-              {/* Avatar - mostrar bonequinho quando não logado */}
               {isAuthenticated ? (
                 <div 
                   onClick={() => {
-                    // Redirecionar baseado no tipo de usuário
                     if (user?.userType === 'guide' || user?.email?.endsWith('@guia.com.br')) {
                       navigate('/dashboard/guide');
                     } else if (user?.userType === 'restaurant' || user?.email?.endsWith('@comercio.com.br')) {

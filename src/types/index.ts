@@ -13,14 +13,14 @@ export interface TouristSpot {
       lng: number;
     };
   };
-  categories: string[]; // Changed from 'category' to 'categories' array
+  categories: string[];
   rating: number;
   reviews: number;
   priceRange: string;
   features: string[];
-  activities: string[]; // Added missing property
-  bestSeason: string; // Added missing property
-  difficulty: string; // Added missing property
+  activities: string[];
+  bestSeason: string;
+  difficulty: string;
   openingHours?: {
     [key: string]: string;
   };
@@ -39,35 +39,38 @@ export interface Guide {
   specialties: string[];
   languages: string[];
   rating: number;
-  reviews: number; // Added missing property (was reviewsCount)
+  reviews: number;
   reviewsCount: number;
   pricePerHour: number;
   availability: string[];
   location: string;
   verified: boolean;
   experience: number;
-  cadasturId: string; // Added missing property
-  photo: string; // Added missing property
+  cadasturId: string;
+  photo: string;
   contact: {
     phone: string;
     email: string;
   };
+  profileComplete?: boolean;
+  profileCompletionPercentage?: number;
+  missingFields?: string[];
 }
 
 export interface Itinerary {
   id: string;
   title: string;
-  name: string; // Added missing property
+  name: string;
   description: string;
   duration: string;
   difficulty: 'Fácil' | 'Moderado' | 'Difícil';
   price: number;
-  estimatedCost: number; // Added missing property
+  estimatedCost: number;
   images: string[];
   includes: string[];
   destinations: string[];
-  spots: TouristSpot[]; // Added missing property
-  tags: string[]; // Added missing property
+  spots: TouristSpot[];
+  tags: string[];
   guide?: {
     name: string;
     rating: number;
@@ -78,7 +81,7 @@ export interface Event {
   id: string;
   title: string;
   description: string;
-  date: Date; // Changed from string to Date
+  date: Date;
   time: string;
   location: {
     name: string;

@@ -5,18 +5,21 @@ import Header from '@/components/layout/Header';
 import Navigation from '@/components/layout/Navigation';
 import GuideCard from '@/components/guides/GuideCard';
 import { Button } from '@/components/ui/button';
+import { Calendar } from '@/components/ui/calendar';
 import { mockGuides } from '@/data/mockData';
 import { Guide } from '@/types';
-import { SortAsc, ChevronRight, ChevronLeft, Filter } from 'lucide-react';
+import { SortAsc, ChevronRight, ChevronLeft, Filter, Calendar as CalendarIcon } from 'lucide-react';
 
 const Guides = () => {
   const navigate = useNavigate();
   const [activeFilter, setActiveFilter] = useState('todos');
   const [sortBy, setSortBy] = useState('rating');
   const [showSortOptions, setShowSortOptions] = useState(false);
+  const [travelDate, setTravelDate] = useState<Date | undefined>();
+  const [showDatePicker, setShowDatePicker] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // Opções de ordenação
+  // Sort options
   const sortOptions = [
     { id: 'rating', name: 'Melhor Avaliação', icon: '⭐' },
     { id: 'price', name: 'Preço', icon: '💰' },
@@ -28,7 +31,7 @@ const Guides = () => {
     return sortOptions.find(option => option.id === sortBy) || sortOptions[0];
   };
 
-  // Categorias de especialidades com contadores
+  // Categories with counters
   const categories = useMemo(() => {
     const baseCategories = [
       { id: 'todos', name: 'Todos', icon: '🧭', color: 'text-cerrado-600' },
@@ -38,7 +41,7 @@ const Guides = () => {
       { id: 'gastronomia', name: 'Gastronomia Local', icon: '🍽️', color: 'text-red-600' },
       { id: 'festas-tradicionais', name: 'Festas Tradicionais', icon: '🎭', color: 'text-pink-600' },
       { id: 'pantanal', name: 'Pantanal', icon: '🐊', color: 'text-green-600' },
-      { id: 'fauna', name: 'Observação de Fauna', icon: '🦎', color: 'text-pantanal-600' },
+      { id: 'fauna', name: 'Observação da Fauna', icon: '🦎', color: 'text-pantanal-600' },
       { id: 'pesca', name: 'Pesca Esportiva', icon: '🎣', color: 'text-blue-600' },
     ];
 
@@ -47,100 +50,84 @@ const Guides = () => {
         return { ...category, count: mockGuides.length };
       }
       
-      let count = 0;
-      switch (category.id) {
-        case 'trekking':
-          count = mockGuides.filter(guide => 
-            guide.specialties.some(s => s.toLowerCase().includes('trekking') || s.toLowerCase().includes('trilha'))
-          ).length;
-          break;
-        case 'rapel':
-          count = mockGuides.filter(guide => 
-            guide.specialties.some(s => s.toLowerCase().includes('rapel') || s.toLowerCase().includes('escalada'))
-          ).length;
-          break;
-        case 'centro-historico':
-          count = mockGuides.filter(guide => 
-            guide.specialties.some(s => s.toLowerCase().includes('histórico') || s.toLowerCase().includes('história'))
-          ).length;
-          break;
-        case 'gastronomia':
-          count = mockGuides.filter(guide => 
-            guide.specialties.some(s => s.toLowerCase().includes('gastronomia') || s.toLowerCase().includes('culinária'))
-          ).length;
-          break;
-        case 'festas-tradicionais':
-          count = mockGuides.filter(guide => 
-            guide.specialties.some(s => s.toLowerCase().includes('festa') || s.toLowerCase().includes('tradição'))
-          ).length;
-          break;
-        case 'pantanal':
-          count = mockGuides.filter(guide => 
-            guide.specialties.some(s => s.toLowerCase().includes('pantanal'))
-          ).length;
-          break;
-        case 'fauna':
-          count = mockGuides.filter(guide => 
-            guide.specialties.some(s => 
-              s.toLowerCase().includes('fauna') || 
-              s.toLowerCase().includes('observação')
-            )
-          ).length;
-          break;
-        case 'pesca':
-          count = mockGuides.filter(guide => 
-            guide.specialties.some(s => s.toLowerCase().includes('pesca'))
-          ).length;
-          break;
-      }
+      const count = mockGuides.filter(guide => 
+        guide.specialties.some(specialty => {
+          const spec = specialty.toLowerCase();
+          switch (category.id) {
+            case 'trekking':
+              return spec.includes('trekking') || spec.includes('trilha');
+            case 'rapel':
+              return spec.includes('rapel') || spec.includes('escalada');
+            case 'centro-historico':
+              return spec.includes('histórico') || spec.includes('história');
+            case 'gastronomia':
+              return spec.includes('gastronomia') || spec.includes('culinária');
+            case 'festas-tradicionais':
+              return spec.includes('festa') || spec.includes('tradição');
+            case 'pantanal':
+              return spec.includes('pantanal');
+            case 'fauna':
+              return spec.includes('fauna') || spec.includes('observação');
+            case 'pesca':
+              return spec.includes('pesca');
+            default:
+              return false;
+          }
+        })
+      ).length;
+
       return { ...category, count };
     });
   }, []);
 
-  // Filtrar guias
-  const filteredGuides = mockGuides.filter(guide => {
-    if (activeFilter === 'todos') return true;
+  // Filter guides
+  const filteredGuides = useMemo(() => {
+    if (activeFilter === 'todos') return mockGuides;
     
-    return guide.specialties.some(specialty => {
-      const spec = specialty.toLowerCase();
-      switch (activeFilter) {
-        case 'trekking':
-          return spec.includes('trekking') || spec.includes('trilha');
-        case 'rapel':
-          return spec.includes('rapel') || spec.includes('escalada');
-        case 'centro-historico':
-          return spec.includes('histórico') || spec.includes('história');
-        case 'gastronomia':
-          return spec.includes('gastronomia') || spec.includes('culinária');
-        case 'festas-tradicionais':
-          return spec.includes('festa') || spec.includes('tradição');
-        case 'pantanal':
-          return spec.includes('pantanal');
-        case 'fauna':
-          return spec.includes('fauna') || spec.includes('observação');
-        case 'pesca':
-          return spec.includes('pesca');
+    return mockGuides.filter(guide =>
+      guide.specialties.some(specialty => {
+        const spec = specialty.toLowerCase();
+        switch (activeFilter) {
+          case 'trekking':
+            return spec.includes('trekking') || spec.includes('trilha');
+          case 'rapel':
+            return spec.includes('rapel') || spec.includes('escalada');
+          case 'centro-historico':
+            return spec.includes('histórico') || spec.includes('história');
+          case 'gastronomia':
+            return spec.includes('gastronomia') || spec.includes('culinária');
+          case 'festas-tradicionais':
+            return spec.includes('festa') || spec.includes('tradição');
+          case 'pantanal':
+            return spec.includes('pantanal');
+          case 'fauna':
+            return spec.includes('fauna') || spec.includes('observação');
+          case 'pesca':
+            return spec.includes('pesca');
+          default:
+            return spec.includes(activeFilter);
+        }
+      })
+    );
+  }, [activeFilter]);
+
+  // Sort guides
+  const sortedGuides = useMemo(() => {
+    return [...filteredGuides].sort((a, b) => {
+      switch (sortBy) {
+        case 'rating':
+          return b.rating - a.rating;
+        case 'price':
+          return a.pricePerHour - b.pricePerHour;
+        case 'experience':
+          return b.experience - a.experience;
+        case 'reviews':
+          return b.reviews - a.reviews;
         default:
-          return spec.includes(activeFilter);
+          return 0;
       }
     });
-  });
-
-  // Ordenar guias
-  const sortedGuides = [...filteredGuides].sort((a, b) => {
-    switch (sortBy) {
-      case 'rating':
-        return b.rating - a.rating;
-      case 'price':
-        return a.pricePerHour - b.pricePerHour;
-      case 'experience':
-        return b.experience - a.experience;
-      case 'reviews':
-        return b.reviews - a.reviews;
-      default:
-        return 0;
-    }
-  });
+  }, [filteredGuides, sortBy]);
 
   const scrollLeft = () => {
     if (scrollRef.current) {
@@ -165,9 +152,9 @@ const Guides = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
+      <Navigation />
       
       <main className="container mx-auto px-4 py-6 pb-20">
-        {/* Back Button */}
         <Button 
           variant="ghost" 
           onClick={() => navigate(-1)}
@@ -176,19 +163,53 @@ const Guides = () => {
           ← Voltar
         </Button>
 
-        {/* Título da Página */}
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold gradient-text mb-2 flex items-center justify-center gap-2">
             🧭 Guias Especializados
           </h1>
           <p className="text-gray-600 max-w-2xl mx-auto">
-            Encontre os melhores guias especializados de Mato Grosso
+            Encontre os melhores guias especializados em Mato Grosso
           </p>
         </div>
 
-        {/* Filtros Bonitos */}
+        <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm mb-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                <CalendarIcon className="h-5 w-5 text-cerrado-600" />
+                Data da Viagem
+              </h3>
+              <p className="text-sm text-gray-600">
+                {travelDate ? `Viagem agendada para ${travelDate.toLocaleDateString('pt-BR')}` : 'Selecione sua data de viagem'}
+              </p>
+            </div>
+            <Button
+              variant="outline"
+              onClick={() => setShowDatePicker(!showDatePicker)}
+              className="flex items-center gap-2"
+            >
+              <CalendarIcon className="h-4 w-4" />
+              {travelDate ? 'Alterar Data' : 'Selecionar Data'}
+            </Button>
+          </div>
+          
+          {showDatePicker && (
+            <div className="mt-4 flex justify-center">
+              <Calendar
+                mode="single"
+                selected={travelDate}
+                onSelect={(date) => {
+                  setTravelDate(date);
+                  setShowDatePicker(false);
+                }}
+                disabled={(date) => date < new Date()}
+                className="rounded-md border"
+              />
+            </div>
+          )}
+        </div>
+
         <div className="space-y-4 mb-6">
-          {/* Filtros por Especialidade */}
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
@@ -201,7 +222,6 @@ const Guides = () => {
             </div>
             
             <div className="flex items-center gap-2 w-full">
-              {/* Botão de seta esquerda */}
               <Button
                 variant="ghost"
                 size="icon"
@@ -211,7 +231,6 @@ const Guides = () => {
                 <ChevronLeft className="h-4 w-4 text-white" />
               </Button>
 
-              {/* Container dos filtros */}
               <div 
                 ref={scrollRef}
                 className="flex space-x-2 overflow-x-auto pb-2 scrollbar-hide flex-1"
@@ -242,7 +261,6 @@ const Guides = () => {
                 ))}
               </div>
 
-              {/* Botão de seta direita */}
               <Button
                 variant="ghost"
                 size="icon"
@@ -254,7 +272,6 @@ const Guides = () => {
             </div>
           </div>
 
-          {/* Ordenação */}
           <div className="flex items-center justify-between bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
             <div className="flex items-center gap-2">
               <SortAsc className="h-5 w-5 text-cerrado-600" />
@@ -319,7 +336,7 @@ const Guides = () => {
                 Nenhum guia encontrado
               </h3>
               <p className="text-gray-600 mb-6 max-w-md mx-auto">
-                Não encontramos guias com essas características. Tente ajustar os filtros ou explorar outras especialidades.
+                Não conseguimos encontrar guias com essas características. Tente ajustar os filtros ou explorar outras especialidades.
               </p>
               <Button 
                 onClick={() => setActiveFilter('todos')}
@@ -331,8 +348,6 @@ const Guides = () => {
           )}
         </div>
       </main>
-      
-      <Navigation />
     </div>
   );
 };

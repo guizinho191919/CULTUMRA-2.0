@@ -11,21 +11,19 @@ export interface AdminUser {
   isActive: boolean;
 }
 
+export type UserStatus = 'active' | 'pending' | 'suspended' | 'profile_incomplete';
+
 export interface User {
   id: string;
   name: string;
   email: string;
-  type: 'tourist' | 'guide';
-  status: 'active' | 'pending' | 'suspended';
-  balance: number;
+  role: UserRole;
+  status: UserStatus;
   createdAt: string;
-  profileImage?: string;
-  phone?: string;
-  location?: string;
-  specialties?: string[];
-  cadastur?: string;
-  rating?: number;
-  reviewsCount?: number;
+  lastLogin?: string;
+  profileComplete?: boolean;
+  profileCompletionPercentage?: number;
+  missingFields?: string[];
 }
 
 export interface Spot {

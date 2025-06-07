@@ -23,13 +23,13 @@ const HeroSection = () => {
           </p>
           <div className="flex flex-col sm:flex-row gap-4">
             <Button size="lg" variant="outline" className="border-white text-white bg-transparent hover:bg-white hover:text-cerrado-600 transition-colors" onClick={() => navigate('/explore')}>
-              🗺️ Explorar Destinos
+              🗺️ Explore Destinos
             </Button>
             <Button size="lg" variant="outline" className="border-white text-white bg-transparent hover:bg-white hover:text-cerrado-600 transition-colors" onClick={() => navigate('/guides')}>
-              🧭 Encontrar Guias
+              🧭 Encontre Guias
             </Button>
             <Button size="lg" variant="outline" className="border-white text-white bg-transparent hover:bg-white hover:text-cerrado-600 transition-colors" onClick={() => navigate('/explore-food')}>
-              🍽️ Explorar Comidas
+              🍽️ Experimente Comidas
             </Button>
           </div>
         </div>

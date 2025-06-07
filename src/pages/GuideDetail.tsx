@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Header from '@/components/layout/Header';
@@ -7,12 +6,18 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { mockGuides } from '@/data/mockData';
+import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/hooks/use-toast';
+import GuideBooking from '@/components/guides/GuideBooking';
 
 const GuideDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { isAuthenticated, checkPaidReservation } = useAuth();
+  const { toast } = useToast();
   
   const guide = mockGuides.find(g => g.id === id);
+  const [showBooking, setShowBooking] = useState(false);
 
   if (!guide) {
     return (
@@ -53,11 +58,27 @@ const GuideDetail = () => {
   };
 
   const handleStartChat = () => {
+    if (!isAuthenticated) {
+      navigate('/login');
+      return;
+    }
+    
+    const hasPaidReservation = checkPaidReservation(guide.id);
+    
+    if (!hasPaidReservation) {
+      toast({
+        title: "Pagamento necessário",
+        description: "Você precisa contratar os serviços do guia antes de iniciar uma conversa.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     navigate(`/chat/${guide.id}`);
   };
 
   const handleBookService = () => {
-    alert('Funcionalidade de contratação será implementada em breve!');
+    setShowBooking(true);
   };
 
   return (
@@ -292,6 +313,14 @@ const GuideDetail = () => {
       </main>
 
       <Navigation />
+
+      {/* Booking Modal */}
+      {showBooking && (
+        <GuideBooking 
+          guide={guide} 
+          onClose={() => setShowBooking(false)} 
+        />
+      )}
     </div>
   );
 };

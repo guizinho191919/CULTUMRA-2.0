@@ -14,10 +14,12 @@ import SupportButton from '@/components/support/SupportButton';
 import { mockTouristSpots, mockGuides, mockItineraries, mockEvents, categories } from '@/data/mockData';
 import { TouristSpot, Guide, Itinerary, Event } from '@/types';
 import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/hooks/use-toast';
 
 const Index = () => {
+  const { isAuthenticated, checkPaidReservation } = useAuth();
+  const { toast } = useToast();
   const navigate = useNavigate();
-  const { isAuthenticated } = useAuth();
   const [activeCategory, setActiveCategory] = useState('todos');
 
   // Update categories with counts including spots that have multiple categories
@@ -53,11 +55,24 @@ const Index = () => {
   };
 
   const handleStartChat = (guide: Guide) => {
-    // Mantém a restrição apenas para o chat com guias
     if (!isAuthenticated) {
       navigate('/login');
       return;
     }
+    
+    // Verificar se o usuário tem uma reserva paga com este guia
+    const hasPaidReservation = checkPaidReservation(guide.id);
+    
+    if (!hasPaidReservation) {
+      toast({
+        title: "Pagamento necessário",
+        description: "Você precisa contratar os serviços do guia antes de iniciar uma conversa.",
+        variant: "destructive",
+      });
+      navigate(`/guide/${guide.id}`);
+      return;
+    }
+    
     navigate(`/chat/${guide.id}`);
   };
 

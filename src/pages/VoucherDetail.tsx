@@ -66,7 +66,7 @@ const VoucherDetail = () => {
   const handleShare = () => {
     if (navigator.share) {
       navigator.share({
-        title: `Voucher MT Explorer - ${voucher.voucherNumber}`,
+        title: `Voucher Culturando - ${voucher.voucherNumber}`,
         text: `Meu voucher para ${type === 'spot' ? voucher.spot.name : voucher.restaurant.name}`,
         url: window.location.href,
       }).catch((error) => console.log('Erro ao compartilhar', error));
@@ -130,7 +130,7 @@ const VoucherDetail = () => {
         <Card className="mb-6 overflow-hidden">
           <div className="bg-gradient-to-r from-cerrado-500 to-pantanal-500 p-4 text-white">
             <div className="flex justify-between items-center">
-              <h2 className="text-xl font-bold">MT Explorer</h2>
+              <h2 className="text-xl font-bold">Culturando</h2>
               <Badge className="bg-white text-cerrado-700">
                 {voucher.status === 'confirmed' ? 'Confirmado' : 'Pendente'}
               </Badge>

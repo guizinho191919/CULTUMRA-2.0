@@ -9,18 +9,24 @@ import { Badge } from '@/components/ui/badge';
 import { useBackpack } from '@/hooks/useBackpack';
 import { useWallet } from '@/hooks/useWallet';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
 import { CreditCard, Tag, Wallet as WalletIcon, X } from 'lucide-react';
+import { useLocation } from 'react-router-dom';
 
 const Checkout = () => {
   const { items, restaurantItems, clearBackpack } = useBackpack();
   const { balance, savedCards, subtractBalance } = useWallet();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const location = useLocation();
+  const guideBooking = location.state;
+
   const [couponCode, setCouponCode] = useState('');
   const [discount, setDiscount] = useState(0);
   const [selectedPayment, setSelectedPayment] = useState('');
   const [useWalletBalance, setUseWalletBalance] = useState(false);
-  const [selectedCard, setSelectedCard] = useState<any>(null); // Novo estado para armazenar o cartão selecionado
+  const [selectedCard, setSelectedCard] = useState<any>(null);
   
   // Estados para formulários de pagamento
   const [showCardForm, setShowCardForm] = useState(false);
@@ -133,7 +139,6 @@ const Checkout = () => {
 
       // Salvar cartão se solicitado
       if ((selectedPayment === 'new-credit-card' || selectedPayment === 'new-debit-card') && cardData.saveCard) {
-        // Aqui você implementaria a lógica para salvar o cartão
         console.log('Salvando cartão:', cardData);
       }
 
@@ -146,8 +151,26 @@ const Checkout = () => {
       } else if (selectedPayment === 'new-debit-card') {
         paymentMethodLabel = 'new-debit-card';
       } else {
-        // Se for um cartão salvo, usar o ID do cartão como método de pagamento
         paymentMethodLabel = `saved-card-${selectedPayment}`;
+      }
+
+      // Se for uma contratação de guia, salvar a reserva
+      if (guideBooking && guideBooking.type === 'guide') {
+        const guideReservation = {
+          id: Date.now().toString(),
+          userId: user?.id,
+          guideId: guideBooking.guideId,
+          guideName: guideBooking.guideName,
+          amount: guideBooking.pricePerHour,
+          paymentStatus: 'paid',
+          paymentMethod: paymentMethodLabel,
+          createdAt: new Date().toISOString(),
+          type: 'guide_service'
+        };
+        
+        const existingReservations = JSON.parse(localStorage.getItem('userReservations') || '[]');
+        existingReservations.push(guideReservation);
+        localStorage.setItem('userReservations', JSON.stringify(existingReservations));
       }
 
       // Salvar reservas no localStorage
@@ -221,6 +244,23 @@ const Checkout = () => {
       // Salvar reservas no localStorage
       const existingReservations = JSON.parse(localStorage.getItem('reservations') || '[]');
       const existingRestaurantReservations = JSON.parse(localStorage.getItem('restaurantReservations') || '[]');
+      const existingUserReservations = JSON.parse(localStorage.getItem('userReservations') || '[]');
+      
+      // Verificar se é uma reserva de guia
+      if (location.state?.type === 'guide') {
+        const newGuideReservation = {
+          id: `guide-res-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+          guideId: location.state.guideId,
+          guideName: location.state.guideName,
+          userId: user?.email,
+          purchaseDate: new Date(),
+          paymentStatus: 'paid',
+          totalPaid: location.state.pricePerHour,
+          paymentMethod: 'pix'
+        };
+        
+        localStorage.setItem('userReservations', JSON.stringify([...existingUserReservations, newGuideReservation]));
+      }
       
       const newSpotReservations = items.map(item => ({
         id: `res-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,

@@ -133,11 +133,11 @@ const Events = () => {
         </Button>
 
         <div className="mb-6">
-          <h1 className="text-2xl font-bold gradient-text mb-2 flex items-center">
+          <h1 className="text-4xl font-bold gradient-text mb-4 flex items-center justify-center">
             <Calendar className="w-6 h-6 mr-2" />
             Agenda Completa de Eventos
           </h1>
-          <p className="text-gray-600">Descubra todos os eventos acontecendo em Mato Grosso</p>
+          <p className="text-gray-600 text-center">Descubra todos os eventos acontecendo em Mato Grosso</p>
         </div>
 
         {/* Filtros Bonitos */}

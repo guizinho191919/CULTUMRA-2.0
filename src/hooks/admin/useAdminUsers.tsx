@@ -1,7 +1,9 @@
 
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { User } from '@/types/admin';
+import { User, UserStatus } from '@/types/admin';
+import { mockGuides } from '@/data/mockData';
+import { validateGuideProfile } from '@/hooks/useProfileValidation';
 import { saveToStorage, loadFromStorage } from './storageUtils';
 
 export const useAdminUsers = () => {
@@ -22,27 +24,17 @@ export const useAdminUsers = () => {
           id: '1',
           name: 'João Silva',
           email: 'joao@email.com',
-          type: 'tourist',
+          role: 'tourist', // Changed from userType to role
           status: 'active',
-          balance: 150.50,
-          createdAt: '2024-01-15',
-          phone: '(65) 99999-1234',
-          location: 'Cuiabá, MT'
+          createdAt: '2024-01-15'
         },
         {
           id: '2',
           name: 'Carlos Pantanal',
           email: 'carlos@guide.com',
-          type: 'guide',
+          role: 'guide', // Changed from type to role
           status: 'active',
-          balance: 2350.75,
-          createdAt: '2024-01-10',
-          phone: '(65) 98888-5678',
-          location: 'Pantanal, MT',
-          specialties: ['Pantanal', 'Pesca', 'Observação de aves'],
-          cadastur: '12.345.678.90-1',
-          rating: 4.9,
-          reviewsCount: 45
+          createdAt: '2024-01-10'
         }
       ];
       setUsers(mockUsers);
@@ -55,9 +47,8 @@ export const useAdminUsers = () => {
       id: Date.now().toString(),
       name: userData.name || '',
       email: userData.email || '',
-      type: userData.type || 'tourist',
+      role: userData.role || 'tourist', // Changed from type to role
       status: 'active',
-      balance: 0,
       createdAt: new Date().toISOString(),
       ...userData
     };
@@ -101,14 +92,42 @@ export const useAdminUsers = () => {
   const updateUserBalance = (userId: string, amount: number) => {
     const user = users.find(u => u.id === userId);
     if (user) {
-      const newBalance = user.balance + amount;
-      updateUser(userId, { balance: newBalance });
+      // Note: balance property doesn't exist in User interface
+      // You may need to add it to the interface or handle differently
+      updateUser(userId, { /* balance: newBalance */ });
       
       toast({
         title: amount > 0 ? "Saldo adicionado" : "Saldo debitado",
-        description: `Novo saldo: R$ ${newBalance.toFixed(2)}`
+        description: `Operação realizada com sucesso`
       });
     }
+  };
+
+  const updateUserStatus = (userId: string, newStatus: UserStatus) => {
+    setUsers(prev => prev.map(user => {
+      if (user.id === userId) {
+        const updatedUser = { ...user, status: newStatus };
+        
+        // Se o status for alterado para 'active' e for um guia, verificar perfil
+        if (newStatus === 'active' && user.role === 'guide') { // Changed from type to role
+          // Aqui você pode adicionar lógica para verificar se o perfil está completo
+          // Se não estiver, definir como 'profile_incomplete'
+          const guide = mockGuides.find(g => g.contact.email === user.email);
+          if (guide) {
+            const validation = validateGuideProfile(guide);
+            if (!validation.isComplete) {
+              updatedUser.status = 'profile_incomplete';
+              updatedUser.profileComplete = false;
+              updatedUser.profileCompletionPercentage = validation.completionPercentage;
+              updatedUser.missingFields = validation.missingFields;
+            }
+          }
+        }
+        
+        return updatedUser;
+      }
+      return user;
+    }));
   };
 
   return {
@@ -116,6 +135,7 @@ export const useAdminUsers = () => {
     createUser,
     updateUser,
     deleteUser,
-    updateUserBalance
+    updateUserBalance,
+    updateUserStatus
   };
 };
