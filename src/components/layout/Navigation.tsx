@@ -15,7 +15,7 @@ const Navigation = () => {
     { id: 'home', label: 'Início', icon: '🏠', path: '/' },
     { id: 'explorar', label: 'Destinos', icon: '🗺️', path: '/explore' },
     { id: 'comidas', label: 'Comidas', icon: '🍽️', path: '/explore-food' },
-    { id: 'buscar', label: 'Buscar', icon: '🔍', path: '/search' },
+    { id: 'buscar', label: 'Guias', icon: '🧭', path: '/guides' },
     { id: 'chats', label: 'Mensagens', icon: '💬', badge: 3, path: '/chats' },
   ];
 
@@ -43,7 +43,7 @@ const Navigation = () => {
     if (path === '/') return 'home';
     if (path === '/explore') return 'explorar';
     if (path === '/explore-food') return 'comidas';
-    if (path === '/search') return 'buscar';
+    if (path === '/guides') return 'buscar';
     if (path === '/chats') return 'chats';
     if (path.startsWith('/admin')) return 'admin';
     if (path.startsWith('/dashboard/guide')) return 'guide';

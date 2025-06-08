@@ -1,6 +1,8 @@
 import React from 'react';
 import { useState, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 import Header from '@/components/layout/Header';
 import Navigation from '@/components/layout/Navigation';
 import GuideCard from '@/components/guides/GuideCard';
@@ -9,13 +11,14 @@ import { Calendar } from '@/components/ui/calendar';
 import { mockGuides } from '@/data/mockData';
 import { Guide } from '@/types';
 import { SortAsc, ChevronRight, ChevronLeft, Filter, Calendar as CalendarIcon } from 'lucide-react';
+import { DateRange } from 'react-day-picker';
 
 const Guides = () => {
   const navigate = useNavigate();
   const [activeFilter, setActiveFilter] = useState('todos');
   const [sortBy, setSortBy] = useState('rating');
   const [showSortOptions, setShowSortOptions] = useState(false);
-  const [travelDate, setTravelDate] = useState<Date | undefined>();
+  const [travelDateRange, setTravelDateRange] = useState<DateRange | undefined>();
   const [showDatePicker, setShowDatePicker] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -172,43 +175,131 @@ const Guides = () => {
           </p>
         </div>
 
-        <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm mb-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
-                <CalendarIcon className="h-5 w-5 text-cerrado-600" />
+        <div className="bg-white p-3 sm:p-4 rounded-lg border border-gray-200 shadow-sm mb-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+            <div className="flex-1">
+              <h3 className="text-base sm:text-lg font-semibold text-gray-800 flex items-center gap-2">
+                <CalendarIcon className="h-4 w-4 sm:h-5 sm:w-5 text-cerrado-600" />
                 Data da Viagem
               </h3>
-              <p className="text-sm text-gray-600">
-                {travelDate ? `Viagem agendada para ${travelDate.toLocaleDateString('pt-BR')}` : 'Selecione sua data de viagem'}
+              <p className="text-xs sm:text-sm text-gray-600 mt-1 leading-relaxed">
+                {travelDateRange?.from ? (
+                  travelDateRange.to ? (
+                    <>
+                      <span className="block sm:inline">Viagem agendada de</span>
+                      <span className="block sm:inline font-medium text-cerrado-700">
+                        {format(travelDateRange.from, 'dd/MM/yyyy', { locale: ptBR })}
+                      </span>
+                      <span className="block sm:inline"> até </span>
+                      <span className="block sm:inline font-medium text-cerrado-700">
+                        {format(travelDateRange.to, 'dd/MM/yyyy', { locale: ptBR })}
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      <span className="block sm:inline">Data de início:</span>
+                      <span className="block sm:inline font-medium text-cerrado-700">
+                        {format(travelDateRange.from, 'dd/MM/yyyy', { locale: ptBR })}
+                      </span>
+                      <span className="block sm:inline text-orange-600"> - Selecione data final</span>
+                    </>
+                  )
+                ) : (
+                  'Selecione o período da sua viagem'
+                )}
               </p>
             </div>
             <Button
               variant="outline"
               onClick={() => setShowDatePicker(!showDatePicker)}
-              className="flex items-center gap-2"
+              className="flex items-center justify-center gap-2 w-full sm:w-auto text-xs sm:text-sm px-3 py-2 sm:px-4 sm:py-2 min-h-[40px] sm:min-h-[36px]"
             >
-              <CalendarIcon className="h-4 w-4" />
-              {travelDate ? 'Alterar Data' : 'Selecionar Data'}
+              <CalendarIcon className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
+              <span className="truncate">
+                {travelDateRange?.from ? (
+                  travelDateRange.to ? (
+                    <span className="hidden sm:inline">
+                      {format(travelDateRange.from, 'dd/MM/yyyy', { locale: ptBR })} - {format(travelDateRange.to, 'dd/MM/yyyy', { locale: ptBR })}
+                    </span>
+                  ) : (
+                    <span className="hidden sm:inline">
+                      {format(travelDateRange.from, 'dd/MM/yyyy', { locale: ptBR })} - Selecione data final
+                    </span>
+                  )
+                ) : null}
+                <span className="sm:hidden">
+                  {travelDateRange?.from ? (
+                    travelDateRange.to ? 'Período Selecionado' : 'Selecionar Data Final'
+                  ) : (
+                    'Selecionar Período'
+                  )}
+                </span>
+                <span className="hidden sm:inline">
+                  {!travelDateRange?.from && 'Selecionar Período'}
+                </span>
+              </span>
             </Button>
           </div>
           
           {showDatePicker && (
-            <div className="mt-4 flex justify-center">
-              <Calendar
-                mode="single"
-                selected={travelDate}
-                onSelect={(date) => {
-                  setTravelDate(date);
-                  setShowDatePicker(false);
-                }}
-                disabled={(date) => date < new Date()}
-                className="rounded-md border"
-              />
+            <div className="mt-4 p-2 sm:p-0">
+              <div className="flex justify-center">
+                <div className="w-full max-w-sm sm:max-w-none">
+                  <Calendar
+                    mode="range"
+                    selected={travelDateRange}
+                    onSelect={(dateRange) => {
+                      setTravelDateRange(dateRange);
+                      if (dateRange?.from && dateRange?.to) {
+                        setShowDatePicker(false);
+                      }
+                    }}
+                    disabled={(date) => date < new Date()}
+                    className="rounded-lg border bg-white shadow-sm mx-auto"
+                    numberOfMonths={window.innerWidth < 640 ? 1 : 2}
+                    locale={ptBR}
+                    classNames={{
+                      months: "flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4 p-3",
+                      month: "space-y-3",
+                      caption: "flex justify-center pt-1 relative items-center mb-2",
+                      caption_label: "text-sm font-semibold text-gray-700",
+                      nav: "space-x-1 flex items-center",
+                      nav_button: "h-8 w-8 bg-gray-100 hover:bg-gray-200 rounded-full p-0 transition-colors duration-200 flex items-center justify-center",
+                      nav_button_previous: "absolute left-1",
+                      nav_button_next: "absolute right-1",
+                      table: "w-full border-collapse space-y-1",
+                      head_row: "flex mb-1",
+                      head_cell: "text-gray-500 rounded-md w-10 h-8 font-medium text-xs flex items-center justify-center",
+                      row: "flex w-full mt-1",
+                      cell: "h-10 w-10 text-center text-sm p-0 relative hover:bg-gray-50 rounded-md transition-colors duration-150 [&:has([aria-selected].day-range-end)]:rounded-r-md [&:has([aria-selected].day-outside)]:bg-cerrado-50 [&:has([aria-selected])]:bg-cerrado-50 first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20",
+                      day: "h-10 w-10 p-0 font-medium aria-selected:opacity-100 text-sm rounded-md hover:bg-gray-100 transition-colors duration-150 flex items-center justify-center",
+                      day_range_end: "day-range-end",
+                      day_selected: "bg-cerrado-600 text-white hover:bg-cerrado-700 focus:bg-cerrado-700 font-semibold",
+                      day_today: "bg-cerrado-100 text-cerrado-800 font-semibold border border-cerrado-300",
+                      day_outside: "day-outside text-gray-400 opacity-50 aria-selected:bg-cerrado-50 aria-selected:text-gray-500 aria-selected:opacity-60",
+                      day_disabled: "text-gray-300 opacity-40 cursor-not-allowed",
+                      day_range_middle: "aria-selected:bg-cerrado-100 aria-selected:text-cerrado-800",
+                      day_hidden: "invisible",
+                    }}
+                  />
+                </div>
+              </div>
+              
+              {/* Botão para fechar o calendário em mobile */}
+              <div className="flex justify-center mt-3 sm:hidden">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowDatePicker(false)}
+                  className="text-xs px-4 py-2"
+                >
+                  Fechar Calendário
+                </Button>
+              </div>
             </div>
           )}
         </div>
-
+        
         <div className="space-y-4 mb-6">
           <div className="space-y-3">
             <div className="flex items-center justify-between">

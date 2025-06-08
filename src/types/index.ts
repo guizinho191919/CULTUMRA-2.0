@@ -32,6 +32,7 @@ export interface TouristSpot {
 }
 
 export interface Guide {
+  avatarUrl: string;
   id: string;
   name: string;
   profilePicture: string;
@@ -58,6 +59,7 @@ export interface Guide {
 }
 
 export interface Itinerary {
+  interests: any;
   id: string;
   title: string;
   name: string;

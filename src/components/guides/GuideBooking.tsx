@@ -9,6 +9,7 @@ import { useNavigate } from 'react-router-dom';
 import { Guide } from '@/types';
 import { Clock, MapPin, Star, Users, Sparkles } from 'lucide-react';
 import CustomProposalRequest from './CustomProposalRequest';
+import { DateRange } from 'react-day-picker'; // Adicionar import
 
 interface GuideBookingProps {
   guide: Guide;
@@ -20,7 +21,7 @@ const GuideBooking = ({ guide, onClose, travelDate }: GuideBookingProps) => {
   const { user, isAuthenticated } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>();
+  const [selectedDateRange, setSelectedDateRange] = useState<DateRange | undefined>();
   const [selectedTime, setSelectedTime] = useState('');
   const [duration, setDuration] = useState(4); // horas
   const [availableDates, setAvailableDates] = useState<Date[]>([]);
@@ -53,23 +54,29 @@ const GuideBooking = ({ guide, onClose, travelDate }: GuideBookingProps) => {
 
   // Atualizar horários disponíveis quando uma data é selecionada
   useEffect(() => {
-    if (selectedDate) {
+    if (selectedDateRange?.from) {
       // Simular horários disponíveis para a data selecionada
       const times = ['08:00', '09:00', '10:00', '13:00', '14:00', '15:00'];
       const availableToday = times.filter(() => Math.random() > 0.4); // 60% de chance
       setAvailableTimes(availableToday);
     }
-  }, [selectedDate]);
+  }, [selectedDateRange]);
 
   // Usar data da viagem se fornecida
   useEffect(() => {
     if (travelDate) {
-      setSelectedDate(travelDate);
+      setSelectedDateRange({ from: travelDate, to: undefined });
     }
   }, [travelDate]);
-  
+
   const calculateTotal = () => {
-    return guide.pricePerHour * duration;
+    if (!selectedDateRange?.from || !selectedDateRange?.to) {
+      return guide.pricePerHour * duration;
+    }
+    // Calcular total baseado no período selecionado
+    const timeDiff = selectedDateRange.to.getTime() - selectedDateRange.from.getTime();
+    const days = Math.ceil(timeDiff / (1000 * 3600 * 24)) + 1;
+    return guide.pricePerHour * duration * days;
   };
 
   const handleBooking = () => {
@@ -83,10 +90,10 @@ const GuideBooking = ({ guide, onClose, travelDate }: GuideBookingProps) => {
       return;
     }
 
-    if (!selectedDate || !selectedTime) {
+    if (!selectedDateRange?.from || !selectedTime) {
       toast({
         title: "Dados incompletos",
-        description: "Selecione uma data e horário para continuar.",
+        description: "Selecione o período e horário para continuar.",
         variant: "destructive",
       });
       return;
@@ -99,7 +106,10 @@ const GuideBooking = ({ guide, onClose, travelDate }: GuideBookingProps) => {
         guideId: guide.id,
         guideName: guide.name,
         pricePerHour: guide.pricePerHour,
-        selectedDate: selectedDate.toISOString(),
+        selectedDateRange: {
+          from: selectedDateRange.from.toISOString(),
+          to: selectedDateRange.to?.toISOString()
+        },
         selectedTime,
         duration,
         total: calculateTotal()
@@ -140,7 +150,7 @@ const GuideBooking = ({ guide, onClose, travelDate }: GuideBookingProps) => {
       state: {
         guideId: guide.id,
         guideName: guide.name,
-        travelDate: selectedDate?.toISOString()
+        travelDate: selectedDateRange?.from?.toISOString()
       }
     });
   };
@@ -259,15 +269,16 @@ const GuideBooking = ({ guide, onClose, travelDate }: GuideBookingProps) => {
               {/* Seleção de Data e Horário */}
               <div className="space-y-4">
                 <div>
-                  <h4 className="font-medium mb-3">Selecione uma data</h4>
+                  <h4 className="font-medium mb-3">Selecione o período da viagem</h4>
                   <Calendar
-                    mode="single"
-                    selected={selectedDate}
-                    onSelect={setSelectedDate}
+                    mode="range"  // Alterar de "single" para "range"
+                    selected={selectedDateRange}
+                    onSelect={setSelectedDateRange}
                     disabled={(date) => 
                       date < new Date() || !isDateAvailable(date)
                     }
                     className="rounded-md border"
+                    numberOfMonths={2}  // Mostrar 2 meses para facilitar seleção
                   />
                   
                   <div className="mt-3 space-y-1 text-xs">
@@ -280,9 +291,27 @@ const GuideBooking = ({ guide, onClose, travelDate }: GuideBookingProps) => {
                       <span>Indisponível</span>
                     </div>
                   </div>
+                  
+                  {/* Mostrar período selecionado */}
+                  {selectedDateRange?.from && (
+                    <div className="mt-3 p-2 bg-blue-50 rounded-md">
+                      <p className="text-sm font-medium text-blue-900">
+                        Período selecionado:
+                      </p>
+                      <p className="text-sm text-blue-700">
+                        {selectedDateRange.from.toLocaleDateString('pt-BR')}
+                        {selectedDateRange.to && ` até ${selectedDateRange.to.toLocaleDateString('pt-BR')}`}
+                        {selectedDateRange.to && (
+                          <span className="ml-2 font-medium">
+                            ({Math.ceil((selectedDateRange.to.getTime() - selectedDateRange.from.getTime()) / (1000 * 3600 * 24)) + 1} dias)
+                          </span>
+                        )}
+                      </p>
+                    </div>
+                  )}
                 </div>
 
-                {selectedDate && (
+                {selectedDateRange?.from && (
                   <div>
                     <h4 className="font-medium mb-3">Horários disponíveis</h4>
                     <div className="grid grid-cols-2 gap-2">
@@ -314,7 +343,7 @@ const GuideBooking = ({ guide, onClose, travelDate }: GuideBookingProps) => {
               </Button>
               <Button 
                 onClick={handleBooking}
-                disabled={!selectedDate || !selectedTime}
+                disabled={!selectedDateRange?.from || !selectedTime}
                 className="bg-pantanal-600 hover:bg-pantanal-700"
               >
                 Contratar Serviço - R$ {calculateTotal()}

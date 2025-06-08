@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { Badge } from '@/components/ui/badge';
 import { usePendingScheduling, PendingSchedule } from '@/hooks/usePendingScheduling';
+import { DateRange } from 'react-day-picker';
 
 interface DayAvailability {
   day: string;
@@ -45,12 +46,16 @@ const SchedulingSelector = ({
   const { addPendingSchedule, getPendingScheduleForItem } = usePendingScheduling();
   const existingSchedule = getPendingScheduleForItem(itemId);
   
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(existingSchedule?.date);
+  // Mudança principal: usar DateRange ao invés de Date
+  const [selectedDateRange, setSelectedDateRange] = useState<DateRange | undefined>({
+    from: existingSchedule?.date,
+    to: existingSchedule?.endDate
+  });
   const [selectedTime, setSelectedTime] = useState<string>(existingSchedule?.time || '');
   const [isExpanded, setIsExpanded] = useState(!!existingSchedule);
 
   const handleSaveSchedule = () => {
-    if (!selectedDate || !selectedTime) return;
+    if (!selectedDateRange?.from || !selectedTime) return;
 
     const schedule: PendingSchedule = {
       itemId,
@@ -58,7 +63,8 @@ const SchedulingSelector = ({
       itemType,
       itemLocation,
       itemImage,
-      date: selectedDate,
+      date: selectedDateRange.from,
+      endDate: selectedDateRange.to, // Nova propriedade
       time: selectedTime,
     };
 
@@ -114,7 +120,9 @@ const SchedulingSelector = ({
           </CardTitle>
           {hasSchedule && !isExpanded && (
             <Badge className="bg-green-100 text-green-700">
-              {format(existingSchedule.date, 'dd/MM/yyyy', { locale: ptBR })} às {existingSchedule.time}
+              {selectedDateRange?.from && format(selectedDateRange.from, 'dd/MM/yyyy', { locale: ptBR })}
+              {selectedDateRange?.to && ` - ${format(selectedDateRange.to, 'dd/MM/yyyy', { locale: ptBR })}`}
+              {` às ${existingSchedule.time}`}
             </Badge>
           )}
           <Button
@@ -129,17 +137,17 @@ const SchedulingSelector = ({
 
       {isExpanded && (
         <CardContent className="space-y-4">
-          {/* Date Selection */}
+          {/* Date Range Selection */}
           <div>
             <h4 className="font-medium mb-3 flex items-center space-x-2">
               <Calendar className="w-4 h-4" />
-              <span>Selecione a data</span>
+              <span>Selecione o período (início e fim)</span>
             </h4>
             <div className="border rounded-lg p-2">
               <CalendarComponent
-                mode="single"
-                selected={selectedDate}
-                onSelect={setSelectedDate}
+                mode="range"
+                selected={selectedDateRange}
+                onSelect={setSelectedDateRange}
                 disabled={(date) => {
                   // Desabilitar datas passadas
                   if (!isAfter(date, new Date())) return true;
@@ -147,22 +155,29 @@ const SchedulingSelector = ({
                   // Desabilitar dias da semana não disponíveis
                   return !isDateAvailable(date);
                 }}
-                components={{
-                  Day: ({ date, ...props }) => {
-                    // Só renderizar dias personalizados para datas disponíveis
-                    if (isDateAvailable(date)) {
-                      return (
-                        <div {...props}>
-                          {renderDay(date)}
-                        </div>
-                      );
-                    }
-                    return <div {...props}>{format(date, 'd')}</div>;
-                  },
-                }}
+                locale={ptBR}
+                numberOfMonths={2}
                 className="w-full"
+                weekStartsOn={0}
+                formatters={{
+                  formatCaption: (date) => {
+                    return new Intl.DateTimeFormat('pt-BR', {
+                      month: 'long',
+                      year: 'numeric'
+                    }).format(date);
+                  }
+                }}
               />
             </div>
+            {selectedDateRange?.from && (
+              <div className="mt-2 text-sm text-gray-600">
+                <p>
+                  <strong>Período selecionado:</strong> 
+                  {format(selectedDateRange.from, 'dd/MM/yyyy', { locale: ptBR })}
+                  {selectedDateRange.to && ` até ${format(selectedDateRange.to, 'dd/MM/yyyy', { locale: ptBR })}`}
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Time Selection */}
@@ -190,7 +205,7 @@ const SchedulingSelector = ({
           <Button 
             onClick={handleSaveSchedule}
             className="w-full bg-cerrado-600 hover:bg-cerrado-700"
-            disabled={!selectedDate || !selectedTime}
+            disabled={!selectedDateRange?.from || !selectedTime}
           >
             Salvar Agendamento
           </Button>

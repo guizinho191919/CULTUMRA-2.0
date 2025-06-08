@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Header from '@/components/layout/Header';
 import Navigation from '@/components/layout/Navigation';
@@ -9,15 +9,24 @@ import { mockGuides } from '@/data/mockData';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import GuideBooking from '@/components/guides/GuideBooking';
+import { useLocation } from 'react-router-dom';
 
 const GuideDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { isAuthenticated, checkPaidReservation } = useAuth();
   const { toast } = useToast();
   
   const guide = mockGuides.find(g => g.id === id);
   const [showBooking, setShowBooking] = useState(false);
+
+  // Verificar se deve abrir o modal automaticamente
+  useEffect(() => {
+    if (location.state?.openBookingModal) {
+      setShowBooking(true);
+    }
+  }, [location.state]);
 
   if (!guide) {
     return (
@@ -281,7 +290,8 @@ const GuideDetail = () => {
           </CardContent>
         </Card>
 
-        {/* Contact Info */}
+        {/* Contact Info - REMOVIDO */}
+        {/* 
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
@@ -310,6 +320,7 @@ const GuideDetail = () => {
             </div>
           </CardContent>
         </Card>
+        */}
       </main>
 
       <Navigation />

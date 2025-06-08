@@ -79,14 +79,13 @@ const GuideCard = ({ guide, onViewProfile, onStartChat }: GuideCardProps) => {
       return;
     }
     
-    // Navegar para a mochila com informações do guia
-    navigate('/backpack', { 
+    // Navegar para a página do guia e abrir o modal de contratação
+    navigate(`/guide/${guide.id}`, { 
       state: { 
-        selectedGuide: guide,
+        openBookingModal: true,
         dateRange: dateRange,
         hoursPerDay: hoursPerDay,
-        numberOfPeople: numberOfPeople,
-        totalPrice: total
+        numberOfPeople: numberOfPeople
       } 
     });
   };

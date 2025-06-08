@@ -77,31 +77,20 @@ const Notifications = () => {
           ← Voltar
         </Button>
 
-        <div className="mb-6 flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold gradient-text mb-2">Notificações</h1>
-            <p className="text-gray-600">
-              {unreadCount > 0 
-                ? `${unreadCount} notificação${unreadCount > 1 ? 'ões' : ''} não lida${unreadCount > 1 ? 's' : ''}` 
-                : 'Todas as notificações foram lidas'
-              }
-            </p>
-          </div>
-          <div className="flex space-x-2">
-            {unreadCount > 0 && (
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={markAllAsRead}
-                className="flex items-center space-x-1"
-              >
-                <CheckCircle2 className="h-4 w-4" />
-                <span>Marcar todas como lidas</span>
-              </Button>
-            )}
+        <div className="mb-6">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h1 className="text-2xl font-bold gradient-text mb-2">Notificações</h1>
+              <p className="text-gray-600">
+                {unreadCount > 0 
+                  ? `${unreadCount} notificação${unreadCount > 1 ? 'ões' : ''} não lida${unreadCount > 1 ? 's' : ''}` 
+                  : 'Todas as notificações foram lidas'
+                }
+              </p>
+            </div>
             {notifications.length > 0 && (
               <Button 
-                variant="outline" 
+                variant="ghost" 
                 size="sm" 
                 onClick={clearAllNotifications}
                 className="flex items-center space-x-1 text-red-600 hover:text-red-700"
@@ -111,10 +100,43 @@ const Notifications = () => {
               </Button>
             )}
           </div>
+          
+          {/* Barra de ações rápidas - apenas quando há notificações não lidas */}
+          {unreadCount > 0 && (
+            <div className="bg-white rounded-lg border p-3 mb-4">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-600">
+                  {unreadCount} notificação{unreadCount > 1 ? 'ões' : ''} não lida{unreadCount > 1 ? 's' : ''}
+                </span>
+                <Button 
+                  variant="default" 
+                  size="sm" 
+                  onClick={markAllAsRead}
+                  className="bg-cerrado-500 hover:bg-cerrado-600"
+                >
+                  <CheckCircle2 className="h-4 w-4 mr-1" />
+                  Marcar como lidas
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Notifications List */}
         <div className="space-y-4">
+          {unreadCount > 0 && (
+            <div className="text-right mb-2">
+              <Button 
+                variant="link" 
+                size="sm" 
+                onClick={markAllAsRead}
+                className="text-cerrado-600 hover:text-cerrado-700 p-0 h-auto"
+              >
+                Marcar todas como lidas
+              </Button>
+            </div>
+          )}
+          
           {notifications.map((notification) => (
             <Card 
               key={notification.id} 

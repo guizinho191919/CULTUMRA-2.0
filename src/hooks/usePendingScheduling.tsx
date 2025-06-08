@@ -8,6 +8,7 @@ export interface PendingSchedule {
   itemLocation: string;
   itemImage?: string;
   date: Date;
+  endDate?: Date; // Nova propriedade para data de fim
   time: string;
 }
 
@@ -20,7 +21,8 @@ export const usePendingScheduling = () => {
       const parsed = JSON.parse(stored);
       return parsed.map((schedule: any) => ({
         ...schedule,
-        date: new Date(schedule.date)
+        date: new Date(schedule.date),
+        endDate: schedule.endDate ? new Date(schedule.endDate) : undefined // Suporte para endDate
       }));
     } catch (error) {
       console.error('Error parsing pending schedules from localStorage:', error);
@@ -32,7 +34,8 @@ export const usePendingScheduling = () => {
     try {
       const schedulesToStore = pendingSchedules.map(schedule => ({
         ...schedule,
-        date: schedule.date.toISOString()
+        date: schedule.date.toISOString(),
+        endDate: schedule.endDate ? schedule.endDate.toISOString() : undefined // Suporte para endDate
       }));
       localStorage.setItem('pendingSchedules', JSON.stringify(schedulesToStore));
     } catch (error) {
